@@ -1,0 +1,297 @@
+/**
+ * @package 	WordPress
+ * @subpackage 	Food Market
+ * @version 	1.0.0
+ * 
+ * Yith WooCommerce Compare CSS Rules
+ * Created by CMSMasters
+ * 
+ */
+/*-------------------------------------------------------------------------
+
+	1. 	General
+	2. 	Single Product
+	3. 	Shop Product
+	4.	CSS3 Animations
+
+-------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------*/
+/*	1. General */
+/*-------------------------------------------------------------------------*/
+#page #yith-woocompare-related ul li div,
+#yith-woocompare-related ul li div {
+  margin-bottom: 0;
+}
+#yith-woocompare-related .owl-pagination {
+  display: none;
+}
+#yith-woocompare-related .cmsmasters_products .product {
+  width: auto;
+  margin: 0 1%;
+  padding: 1% 0;
+}
+#yith-woocompare-related .cmsmasters_products .cmsmasters_product_inner {
+  padding: 20px 20px 10px 20px;
+}
+#yith-woocompare-related .cmsmasters_products .cmsmasters_product_info {
+  padding-bottom: 10px;
+}
+#yith-woocompare-related .cmsmasters_products .cmsmasters_product_cat {
+  margin-bottom: 0;
+}
+#yith-woocompare-related .cmsmasters_products .cmsmasters_product_features .cmsmasters_product_wishlist_button_wrap div,
+#yith-woocompare-related .cmsmasters_products .cmsmasters_product_features > div {
+  margin-bottom: 0;
+}
+#yith-woocompare-related .cmsmasters_products .cmsmasters_product_features .button {
+  display: block;
+  background: none;
+}
+#yith-woocompare-related .cmsmasters_products .cmsmasters_product_features .button.empty {
+  padding: 0;
+}
+#yith-woocompare-related .cmsmasters_products .cmsmasters_product_features .button:hover {
+  background: none;
+}
+#yith-woocompare-related .cmsmasters_products .cmsmasters_product_info .button {
+  padding: 2px 6px;
+}
+#yith-woocompare-related .cmsmasters_products .cmsmasters_product_info .button.added_to_cart {
+  display: none;
+}
+#yith-woocompare-related .cmsmasters_products .cmsmasters_product_info .button.added + .added_to_cart {
+  display: inline-block;
+}
+#yith-woocompare table .out-of-stock {
+  position: static;
+  -webkit-border-radius: 0;
+  border-radius: 0;
+}
+.cmsmasters_compare_btn {
+  background: none;
+  padding: 7px;
+  display: block;
+  position: relative;
+}
+.cmsmasters_compare_btn:hover {
+  background: none;
+}
+.cmsmasters_compare_btn:before {
+  text-indent: 0;
+  content: '\e847';
+  font-size: 16px;
+  font-family: 'fontello-custom';
+  margin-right: 10px;
+  vertical-align: middle;
+}
+.cmsmasters_compare_btn.empty_lable {
+  text-indent: -9999px;
+  line-height: 30px;
+  width: 30px;
+  height: 30px;
+}
+.cmsmasters_compare_btn.empty_lable:before {
+  line-height: 16px;
+  width: 16px;
+  height: 16px;
+  margin: auto !important;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+}
+.cmsmasters_compare_btn.added {
+  margin-right: -2px;
+}
+.cmsmasters_compare_btn .blockUI.blockOverlay {
+  background-image: url(../img/loader.gif) !important;
+  background-position: 50% 50% !important;
+}
+body #yith-woocompare-cat-nav ul li:before {
+  content: none;
+  display: none;
+}
+body a.button.yith_woocompare_clear {
+  -webkit-border-radius: 0;
+  border-radius: 0;
+}
+body table.compare-list .remove {
+  text-align: center;
+}
+body table.compare-list .added_to_cart {
+  padding: 0 28px;
+  -webkit-border-radius: 0;
+  border-radius: 0;
+}
+body table.compare-list .add-to-cart .button,
+body table.compare-list .product_info .button {
+  padding: 0 28px;
+  -webkit-border-radius: 0;
+  border-radius: 0;
+}
+#page .owl-carousel .owl-stage:after {
+  content: '.';
+  display: block;
+  clear: both;
+  height: 0;
+  visibility: hidden;
+  overflow: hidden;
+}
+#page table.compare-list .add-to-cart .button,
+#page table.compare-list .product_info .button {
+  padding: 0 28px;
+}
+#page table.compare-list .remove {
+  display: block;
+  background: none;
+  width: auto;
+  height: auto;
+  padding: 0 0 20px;
+}
+#page table.compare-list .remove .remove {
+  padding: 0 5px 0;
+  display: inline-block;
+  vertical-align: inherit;
+}
+#page .yith-woocompare-widget:after {
+  content: '.';
+  display: block;
+  clear: both;
+  height: 0;
+  visibility: hidden;
+  overflow: hidden;
+}
+#page .yith-woocompare-widget .products-list {
+  padding: 0;
+}
+#page .yith-woocompare-widget .products-list li {
+  padding: 0 0 5px !important;
+  border: none !important;
+}
+#page .yith-woocompare-widget .products-list li:before {
+  content: none;
+}
+#page .yith-woocompare-widget .products-list li .remove {
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0 10px 0 0 !important;
+  width: 16px !important;
+  height: 16px !important;
+  text-indent: -9999px !important;
+  -webkit-border-radius: 0;
+  border-radius: 0;
+  border-width: 1px;
+  border-style: solid;
+}
+#page .yith-woocompare-widget .products-list li .remove:before {
+  text-indent: -2px;
+  content: '\eabb';
+  font-family: 'fontello';
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+  width: 16px;
+  height: 16px;
+  margin: auto !important;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+}
+#page .yith-woocompare-widget .products-list li .title {
+  display: inline-block;
+  vertical-align: middle;
+  text-transform: none;
+}
+#page .yith-woocompare-widget a.clear-all {
+  margin: 8px 0 0 20px;
+  display: inline-block;
+}
+#page .yith-woocompare-widget a.compare {
+  padding: 0 30px;
+  -webkit-border-radius: 0;
+  border-radius: 0;
+  float: left;
+}
+#page table.compare-list .remove a {
+  text-transform: none;
+}
+#yith-woocompare-share ul li {
+  padding: 0;
+  margin: 0;
+}
+#yith-woocompare-share ul li:before {
+  content: none;
+}
+#yith-woocompare-share ul li a {
+  position: relative;
+  background: none;
+  width: 21px;
+  height: 21px;
+  display: inline-block;
+  margin-right: 5px;
+  z-index: 1;
+}
+#yith-woocompare-share ul li a:before {
+  text-indent: 0;
+  font-family: 'fontello';
+  width: 1em;
+  height: 1em;
+  margin: auto !important;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  line-height: 14px;
+  font-size: 14px;
+}
+#yith-woocompare-share ul li a.twitter:before {
+  content: '\ea97';
+}
+#yith-woocompare-share ul li a.googleplus:before {
+  content: '\ea65';
+}
+#yith-woocompare-share ul li a.pinterest:before {
+  content: '\ea7b';
+}
+#yith-woocompare-share ul li a.email:before {
+  content: '\e8a5';
+}
+/*-------------------------------------------------------------------------*/
+/*	2. Single Product */
+/*-------------------------------------------------------------------------*/
+.cmsmasters_single_product .cmsmasters_compare_btn {
+  padding: 13px;
+  margin: 0 6px 6px 0;
+  min-height: 48px;
+  font-size: 14px;
+  line-height: 22px;
+  float: left;
+  text-align: center;
+}
+.cmsmasters_single_product .cmsmasters_compare_btn.empty_lable {
+  width: auto;
+  min-width: 48px;
+  min-height: 48px;
+}
+.cmsmasters_single_product .cmsmasters_compare_btn:before {
+  font-size: 18px;
+  width: 18px;
+}
+/*-------------------------------------------------------------------------*/
+/*	3. Shop Product */
+/*-------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------*/
+/*	4.	CSS3 Animations	*/
+/*-------------------------------------------------------------------------*/
+body table.compare-list .added_to_cart {
+  -webkit-transition: all .3s ease-in-out;
+  -moz-transition: all .3s ease-in-out;
+  -ms-transition: all .3s ease-in-out;
+  -o-transition: all .3s ease-in-out;
+  transition: all .3s ease-in-out;
+}

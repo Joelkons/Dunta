@@ -1,0 +1,129 @@
+/**
+ * @package 	WordPress
+ * @subpackage 	Food Market
+ * @version 	1.0.0
+ * 
+ * Yith WooCommerce Ajax Search CSS Rules
+ * Created by CMSMasters
+ * 
+ */
+/*-------------------------------------------------------------------------*/
+/*	Global Styles
+/*-------------------------------------------------------------------------*/
+.yith-ajaxsearchform-container {
+  position: relative;
+}
+#page > .cmsmasters_header_search_form .yith-ajaxsearchform-container {
+  vertical-align: middle;
+  display: inline-block;
+  max-width: 90%;
+  width: 700px;
+  margin-top: -40px;
+}
+#page > .cmsmasters_header_search_form .yith-ajaxsearchform-container form {
+  display: block;
+  max-width: none;
+  width: auto;
+  margin: 0;
+}
+#page > .cmsmasters_header_search_form .yith-ajaxsearchform-container form .search_field {
+  height: 80px;
+}
+.yith-ajaxsearchform-container .yith-s {
+  background-position: center center !important;
+}
+.yith-ajaxsearchform-container select {
+  display: block;
+  width: 100%;
+  margin-bottom: 10px;
+}
+.cmsmasters_header_search_form .yith-ajaxsearchform-select {
+  display: none;
+}
+.yith_woocommerce_ajax_search input:not([type=button]):not([type=checkbox]):not([type=file]):not([type=hidden]):not([type=image]):not([type=radio]):not([type=reset]):not([type=submit]):not([type=color]):not([type=range]) {
+  width: 100%;
+  padding-left: 15px;
+  padding-right: 36px;
+}
+.yith_woocommerce_ajax_search #yith-searchsubmit {
+  background: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0;
+  width: 36px;
+}
+.yith_woocommerce_ajax_search .cmsmasters_header_search_form_field {
+  position: relative;
+}
+/*-------------------------------------------------------------------------*/
+/*	Search Autocomplete
+/*-------------------------------------------------------------------------*/
+.autocomplete-suggestions {
+  width: 100% !important;
+  position: absolute;
+  left: 0;
+  top: 100%;
+  border-width: 1px;
+  border-style: solid;
+  border-top-width: 0;
+  border-top-style: solid;
+}
+.autocomplete-suggestions .link-result {
+  padding: 10px 15px;
+}
+.autocomplete-suggestions .autocomplete-suggestion {
+  padding: 10px 15px;
+  overflow: hidden;
+  cursor: pointer;
+  border-top-width: 1px;
+  border-top-style: solid;
+}
+.autocomplete-suggestions .autocomplete-suggestion:first-child {
+  border-top-width: 0;
+  border-top-style: solid;
+}
+.autocomplete-suggestions .autocomplete-suggestion:hover {
+  outline: none;
+}
+.autocomplete-suggestions .yith_wcas_result_image.align-left {
+  float: left;
+  margin-left: 0;
+  margin-right: 10px;
+}
+.autocomplete-suggestions .yith_wcas_result_image.align-right {
+  float: right;
+  margin-left: 10px;
+  margin-right: 0;
+}
+.autocomplete-suggestions .yith_wcas_result_content {
+  overflow: hidden;
+  position: relative;
+}
+.autocomplete-suggestions .title {
+  margin: 0 0 5px;
+}
+.autocomplete-suggestions .badges {
+  position: relative;
+}
+.autocomplete-suggestions .yith_wcas_result_categories {
+  margin: 0 0 5px;
+}
+.autocomplete-suggestions .amount {
+  position: relative;
+}
+.autocomplete-suggestions .yith_wcas_result_excerpt {
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+/*-------------------------------------------------------------------------*/
+/* CSS3 Animations
+/*-------------------------------------------------------------------------*/
+html.csstransitions .autocomplete-suggestion {
+  -webkit-transition: background-color .3s ease-in-out, color .3s ease-in-out;
+  -moz-transition: background-color .3s ease-in-out, color .3s ease-in-out;
+  -ms-transition: background-color .3s ease-in-out, color .3s ease-in-out;
+  -o-transition: background-color .3s ease-in-out, color .3s ease-in-out;
+  transition: background-color .3s ease-in-out, color .3s ease-in-out;
+}

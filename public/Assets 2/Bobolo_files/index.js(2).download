@@ -1,0 +1,378 @@
+// These need to be double escaped because first escape is for the string then second one is used
+//  as the regex \
+var fractionCombinedString = '\\d+\\s*\\/\\s*\\d+';
+var decimalString = '\\d*\\.\\d+';
+var intString = '\\d+';
+var numberString = decimalString + "|" + intString;
+var fractionSymbolString = '[¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]';
+// Order is important here. Items with low array indexes will get matched first
+var regexStrings = [
+    { name: 'mixedNumber', string: intString + "\\s*+" + fractionSymbolString + "|" + intString + "\\s+" + fractionCombinedString },
+    { name: 'range', string: "(" + numberString + ")\\s*-\\s*(" + numberString + ")" },
+    { name: 'fractionCombined', string: fractionCombinedString },
+    { name: 'decimal', string: decimalString },
+    { name: 'int', string: intString },
+    { name: 'fractionSymbol', string: fractionSymbolString },
+];
+
+var zrdnDetectedTypeInRecipe;
+
+// Rounds ounces to 1 digits and grams to whole numbers
+var roundUnits = function (value) {
+    if (zrdnDetectedTypeInRecipe === 'metric') {
+        return Math.round(value * 10) / 10;
+    } else {
+        return Math.round(value);
+    }
+};
+
+/**
+ * Get matched regex results and type of number.
+ *
+ * To make sure only the first match is returned, we check the index of the match, and get the lowest index of this match.
+ *
+ * @param ingredient Ingredient string
+ *
+ *
+ */
+function getNumberWithType(ingredient) {
+    var trimmed_ingredient = ingredient.trim();
+    var results = false;
+
+    var lowestKey = trimmed_ingredient.length;
+    for (var _i = 0, regexStrings_1 = regexStrings; _i < regexStrings_1.length; _i++) {
+        var regType = regexStrings_1[_i];
+        var regex = new RegExp("(" + regType.string + ")", 'g');
+        var regexResults = regex.exec(trimmed_ingredient);
+        if (regexResults !== null && regexResults.index<lowestKey) {
+            lowestKey = regexResults.index;
+            results = { regexResults: regexResults, type: regType.name };
+        }
+    }
+
+    return results;
+}
+/**
+ * Find the number in the ingredient line.
+ *
+ * @param ingredient Ingredient line. E.g. "2 cups of almonds"
+ * @returns [startIndex, endIndex] or false if no number is found.
+ */
+function findNumberOrFraction(ingredient) {
+    var numberAndType = getNumberWithType(ingredient);
+    if (!numberAndType) {
+        return false;
+    }
+    var regexResults = numberAndType.regexResults;
+    return { range: [regexResults.index, regexResults.index + regexResults[1].length], type: numberAndType.type };
+}
+/**
+ * Wrap complex number with `span` that applies CSS animation
+ * @param input [range, toRange] Range numbers (e.g. 2-4 will be [2,4])
+ */
+function wrapComplexUpdated(input, originalValue) {
+    return "<span class=\"zrdn-updated-amount\" data-original-value=\"" + originalValue + "\">" + input[0] + "-" + input[1] + "</span>";
+}
+/**
+ * Wrap number with `span` that applies CSS animation
+ * @param input Number to wrap.
+ */
+function wrapUpdated(input, originalValue) {
+    return "<span class=\"zrdn-updated-amount\" data-original-value=\"" + originalValue + "\">" + input + "</span>";
+}
+
+/**
+ * Parse complex number and return int array.
+ * @param input Complex number
+ * @param factor
+ */
+function imc_parseComplexAndUpdate(input, factor) {
+
+    factor = parseFloat(factor);
+    var results = [-1, -1];
+    var parsedNumber = getNumberWithType(input.value);
+    if (!parsedNumber) {
+        return results;
+    }
+    // split on '-'
+    var str = parsedNumber.regexResults[1];
+    var split = str.split('-');
+    // a*factor - b*factor
+    var prelim_left = parseFloat(split[0]) * factor;
+    var left = roundUnits(prelim_left);
+    var prelim_right = parseFloat(split[1]) * factor;
+    var right = roundUnits(prelim_right);
+    return [left, right];
+}
+/**
+ * Parse and return number once it's processed.
+ * @param input Number
+ * @param factor
+ */
+function imc_parseAndUpdate(input, factor) {
+    factor = parseFloat(factor);
+    var results = -1;
+    var parsedNumber = getNumberWithType(input.value);
+
+    if (!parsedNumber) {
+        return results;
+    }
+    if (parsedNumber.type === 'int') {
+        var prelim_results = parseInt(parsedNumber.regexResults[1]) * factor;
+        results = roundUnits(prelim_results);
+    }
+    else if (parsedNumber.type === 'decimal') {
+        var prelim_results = parseFloat(parsedNumber.regexResults[1]) * factor;
+        results = roundUnits(prelim_results);
+    }
+    else if (parsedNumber.type === 'fractionSymbol') {
+        var symbolToCombined = {
+            '¼': '1/4',
+            '½': '1/2',
+            '¾': '3/4',
+            '⅓': '1/3',
+            '⅔': '2/3',
+            '⅕': '1/5',
+            '⅖': '2/5',
+            '⅗': '3/5',
+            '⅘': '4/5',
+            '⅙': '1/6',
+            '⅚': '5/6',
+            '⅛': '1/8',
+            '⅜': '3/8',
+            '⅝': '5/8',
+            '⅞': '7/8'
+        };
+        var str = parsedNumber.regexResults[1];
+        // Math.round rounds to nearest int. We multiply by 100, round and then divide by 100 to get 2 decimal places
+        var prelim_results = imc_parseAndUpdate({ value: symbolToCombined[str], type: 'fractionCombined' }, factor);
+
+        results = roundUnits(prelim_results);
+    }
+    else if (parsedNumber.type === 'fractionCombined') {
+        // split on '/'
+        var str = parsedNumber.regexResults[1];
+        var split = str.split('/');
+        // divide a/b * factor
+        // Math.round rounds to nearest int. We multiply by 100, round and then divide by 100 to get 2 decimal places
+
+        var prelim_results = parseInt(split[0], 10) / parseInt(split[1], 10) * factor;
+
+        results = roundUnits(prelim_results);
+    }
+    else if (parsedNumber.type === 'mixedNumber') {
+        // split on '\s'
+        var str = parsedNumber.regexResults[1];
+        //get integer and fraction from this type, which consists of both integers and fractions
+        var fractionNumber = str.replace(/\d*/, '');
+        var regex = new RegExp(/\d*/, 'g');
+        var integerNumber = regex.exec(str);
+        integerNumber = integerNumber[0];
+        integerNumber = parseAndUpdate({ value: integerNumber, type: 'int' }, 1); // we use factor of 1 in this prelim stage
+        fractionNumber = parseAndUpdate({ value: fractionNumber, type: 'fractionCombined' }, 1);
+        // // sum them then * factor
+        var prelim_results = (integerNumber + fractionNumber) * factor;
+        results = roundUnits(prelim_results);
+    }
+
+    return results;
+};
+
+
+/**
+ * Entry point run when DOM is ready.
+ */
+jQuery(document).ready(function ($) {
+    var metricsImperialContainer = $('#zrdn-metrics-imperial-container');
+    var htmlString;
+
+    htmlString = '<label for="zrdn-imperial-metric"><select name="zrdn-imperial-metric" id="zrdn-imperial-metric" class="zrdn-imperial-metric"><option value="metric">'+imperialMetricsData.metric+'</option><option value="imperial">'+imperialMetricsData.imperial+'</option></select></label>';
+
+    metricsImperialContainer.append(htmlString).ready(function () {
+        jQuery('.zrdn-imperial-metric').on('change', function(e){
+            metricImperialChange(e);
+        });
+    });
+
+    var ingredientList = getIngredientList();
+
+    // first check if there is a recipe list, otherwise its a new recipe and we don't want the converter
+    if (ingredientList.length > 0) {
+
+        if (metricsImperialContainer.length > 1) return;
+        zrdnDetectedTypeInRecipe = 'imperial';
+        // this loop checks the initial unit type of the recipe
+        var detectedType = detectInitialType(ingredientList);
+        if (detectedType) zrdnDetectedTypeInRecipe = detectedType;
+
+        /**
+         * Set the default unit type based on the visitor's region
+         */
+
+        if (!sessionStorage.getItem('zrdn_unit_type')) {
+            $.ajax({
+                type: "GET",
+                url: imperialMetricsData.ajax_url,
+                dataType: 'json',
+                data: ({
+                    action: 'zrdn_geoip'
+                }),
+                success: function (unitType) {
+                    if (unitType ==='metric' || unitType === 'imperial') {
+                        sessionStorage.setItem('zrdn_unit_type', unitType);
+                        zrdnTriggerChange(unitType);
+                    }
+                },
+            });
+        } else {
+            zrdnTriggerChange(sessionStorage.getItem('zrdn_unit_type'));
+        }
+
+    }
+
+    function zrdnTriggerChange (units) {
+        if (units === 'imperial' && zrdnDetectedTypeInRecipe==='imperial' || units === 'metric' && zrdnDetectedTypeInRecipe==='metric') {
+            return;
+        }
+
+        $('select[name="zrdn-imperial-metric"] option[value='+units+']').attr('selected','selected');
+        metricImperialChange();
+    }
+
+    function metricImperialChange(){
+
+        var type = $('select[name="zrdn-imperial-metric"]').val(); // type of metric which it will change to
+        var changeFactor= 1;
+        var ingredients = getIngredientList();
+        for (var _i = 0; _i < ingredients.length; _i++) {
+            
+            var ing = ingredients[_i];
+            var $ing = jQuery(ing);
+            var $metaWrapper = $ing.find('span.zrdn-updated-amount');
+            $metaWrapper.contents().unwrap();
+            var ingText = $ing.html().trim();
+            var indexAndType = findNumberOrFraction(ingText);
+            if (indexAndType) {
+                var activeUnit = getActiveUnit(ingText, indexAndType);
+                if (!activeUnit) continue;
+                var newRight = ingText.substring(indexAndType.range[1]).trim();
+                var newLeft = ingText.substring(0, indexAndType.range[0]);
+                var currentUnitValue = ingText.substring(indexAndType.range[0], indexAndType.range[1]);
+                if (activeUnit !== false && activeUnit['type'] !== type){
+
+                    // if it is a regex we need to turn it into a string by cutting of the rexeg part
+                    var activeUnitSingle = activeUnit['src'][0].replace('[\\d ]','');
+                    var activeUnitPlural = activeUnit['src'][1].replace('[\\d ]','');
+                    if (newRight.search(getRexExPattern(activeUnitPlural)) !== -1) {
+                        newRight = newRight.replace(getRexExPattern(activeUnitPlural), activeUnit['conversionUnit'][1]);
+                    } else {
+                        newRight = newRight.replace(getRexExPattern(activeUnitSingle), activeUnit['conversionUnit'][1]);
+                    }
+
+                    if (newLeft.search(getRexExPattern(activeUnitPlural)) !== -1) {
+                        newLeft = newLeft.replace(getRexExPattern(activeUnitPlural), activeUnit['conversionUnit'][1]);
+                    } else {
+                        newLeft = newLeft.replace(getRexExPattern(activeUnitSingle), activeUnit['conversionUnit'][1]);
+                    }
+                }
+                // setting the change factor
+                changeFactor = activeUnit.ratio;
+                var originalValue = null;
+                if ($metaWrapper.length > 0) {
+                    originalValue = unescape($metaWrapper.data('original-value').toString());
+                }
+                if (!originalValue) {
+                    originalValue = ingText;
+                }
+
+                // switch from unit
+                if (zrdnDetectedTypeInRecipe !== type) {
+                    var middle = '';
+                    var input;
+                    if (indexAndType.type === "int" || indexAndType.type === "decimal" || indexAndType.type === "fractionCombined" || indexAndType.type === "fractionSymbol" || indexAndType.type === "mixedNumber") {
+                        input = imc_parseAndUpdate({ value: currentUnitValue, type: indexAndType.type }, changeFactor);
+                        middle = wrapUpdated(input, escape(originalValue) );
+                    } else {
+                        input = imc_parseComplexAndUpdate({ value: currentUnitValue, type: indexAndType.type }, changeFactor);
+                        middle = wrapComplexUpdated(input, escape(originalValue) );
+                    }
+                    $ing.html(newLeft + " " + middle + " " + newRight);
+
+                // revert back to the old values
+                } else {
+
+                    if ($('.zrdn-serving-adjustment-input').length > 0) {
+                        $('.zrdn-serving-adjustment-input').val($('.zrdn-serving-adjustment-input').data('initial-value')) 
+                    }
+                    $ing.html(originalValue);
+                }
+            }
+        }
+
+    }
+
+    function getRexExPattern(search){
+        return new RegExp(search+'(?![a-zA-Z])', 'i')
+    }
+
+    /**
+     * Get used unit in this ingredient line, like kg, ounce, etc.
+     */
+     
+    //  zrdn_units is our array with conversion rates given to us from backend
+    function getActiveUnit(ingText, indexAndType){
+        var ingredientLine = ingText;//.substring(0, indexAndType.range[0]) + ingText.substring(indexAndType.range[1]);
+
+        for (var key in zrdn_units) {
+            if (zrdn_units.hasOwnProperty(key)) {
+                var possibleUnits = zrdn_units[key]['src'];
+                for (var unitKey in possibleUnits) {
+                    if (possibleUnits.hasOwnProperty(unitKey)) {
+                        var search = possibleUnits[unitKey];
+                        if (ingredientLine.search(getRexExPattern(search)) !== -1) {
+                            return zrdn_units[key];
+                        }
+                    }
+                }
+
+            }
+        }
+
+        return false;
+    }
+
+
+    /**
+     * Get ingredient list array from recipe.
+     * @param $target metricsImperial input jQuery element
+     */
+    function getIngredientList() {
+        var control = $('select[name="zrdn-imperial-metric"]');
+        var listSelectors = [
+            function () { return control.parents('#zrdn-recipe-container').find('.zrdn-ingredients-list li'); },
+        ];
+        for (var _i = 0, listSelectors_1 = listSelectors; _i < listSelectors_1.length; _i++) {
+            var $sel = listSelectors_1[_i];
+            var $results = $sel();
+            if ($results.length > 0) {
+                return $results.toArray();
+            }
+        }
+        var empty = [];
+        return empty;
+    }
+
+    function detectInitialType(ingredientList){
+        for (var i = 0; i < ingredientList.length; i++) {
+            var ingredientText = $(ingredientList[i]).text().toLowerCase();
+
+            for (var j = 0;  j < zrdn_units.length; j++) {
+                if (ingredientText.search(zrdn_units[j].src[0]) !== -1  || ingredientText.search(zrdn_units[j].src[1]) !== -1 ) {
+                    return zrdn_units[j]['type'];
+                }
+            }
+        }
+        return false;
+    }
+
+});

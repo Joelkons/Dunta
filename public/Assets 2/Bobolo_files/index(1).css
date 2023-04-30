@@ -1,0 +1,31 @@
+#zrdn-recipe-container #zrdn-metrics-imperial-container {
+    margin:10px 0;
+}
+
+select.zrdn-imperial-metric {
+    margin: 0 10px 0 0;
+    padding: 3px;
+    height: 32px;
+    font-size: 22px;
+    border: 1px solid #ccc;
+    line-height: 0.8;
+}
+
+.zrdn-updated-amount {
+    animation: zrdn-pulse 1.5s ease;
+}
+
+@keyframes zrdn-pulse {
+    0% {
+        background-color: yellow;
+        box-shadow: 0 0 3pt 2pt #f0df1e;
+        border-radius: 5px;
+    }
+    100% {
+        background-color: inherit;
+        box-shadow: inherit;
+        border-radius: inherit;
+    }
+}
+
+

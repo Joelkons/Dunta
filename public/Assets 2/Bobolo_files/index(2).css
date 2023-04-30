@@ -1,0 +1,23 @@
+#zrdn-recipe-container .zrdn-yield input.zrdn-serving-adjustment-input {
+  width: 48px;
+  padding: 0 0 0 6px;
+  border: 1px solid #ccc;
+  font-size: 22px;
+  height: 30px;
+}
+.zrdn-updated-amount {
+  animation: zrdn-pulse 1.5s ease;
+}
+@keyframes zrdn-pulse {
+  0% {
+    background-color: yellow;
+    box-shadow: 0 0 3pt 2pt #f0df1e;
+    border-radius: 5px;
+  }
+  100% {
+    background-color: inherit;
+    box-shadow: inherit;
+    border-radius: inherit;
+  }
+}
+/*# sourceMappingURL=index.css.map */

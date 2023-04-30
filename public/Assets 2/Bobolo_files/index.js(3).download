@@ -1,0 +1,341 @@
+"use strict";
+
+/**
+ * This module allow changing of yield number to cause a change in all the ingredients
+ * unit values.
+ *
+ * For example, if yield is changed from 2 to 4, all ingredient unit values are doubled.
+ * Examples of valid ingredient who's unit values would change:
+ * 1 orange
+ * 15 gram of cardamon
+ * 2 teaspoons of orange zest
+ * ½ cup heavy cream
+ * 1.5 tbsp baking soda
+ * 1-2 lemons
+ *
+ * Here's the valid grammar for an ingredient line that will have it's unit value changed:
+ *
+ * <ingredient> ::= <numberOrFraction> <item> | <numberOrFraction> <unit> <item>
+ * <numberOrFraction> ::= <number>+ | <fractionSymbol> | <fractionCombined> | <range> | <mixedNumber>
+ * <number> = <int> | <decimal>
+ * <int> = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+ * <decimal> ::= <int>+.<int>+ | .<int>+
+ * <fractionSymbol> ::= ¼ | ½ | ¾ | ⅓ | ⅔ | ⅕ | ⅖ | ⅗ | ⅘ | ⅙ | ⅚ | ⅛ | ⅜ | ⅝ | ⅞
+ * <fractionCombined> ::= <int>/<int>
+ * <range> ::= <number>-<number>
+ * <mixedNumber> ::= <int> <fractionSymbol> | <int> <fractionCombined>
+ * <unit> ::= grams | g | tbsp | tablespoon | tablespoons ...
+ * <item> ::= food item
+ */
+
+// These need to be double escaped because first escape is for the string then second one is used
+//  as the regex \
+var fractionCombinedString = '\\d+\\s*\\/\\s*\\d+';
+var decimalString = '\\d*\\.\\d+';
+var intString = '\\d+';
+var numberString = decimalString + "|" + intString;
+var fractionSymbolString = '[¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]';
+// Order is important here. Items with low array indexes will get matched first
+var regexStrings = [
+    { name: 'mixedNumber', string: intString + "\\s*" + fractionSymbolString + "|" + intString + "\\s*" + fractionCombinedString },
+    { name: 'range', string: "(" + numberString + ")\\s*-\\s*(" + numberString + ")" },
+    { name: 'fractionCombined', string: fractionCombinedString },
+    { name: 'decimal', string: decimalString },
+    { name: 'int', string: intString },
+    { name: 'fractionSymbol', string: fractionSymbolString },
+];
+
+
+var getChangeFactor = function (newYieldNumber, oldYieldNumber) {
+    return newYieldNumber/oldYieldNumber;
+};
+/**
+ * Get matched regex results and type of number.
+ * @param ingredient Ingredient string
+ */
+var getNumberWithType = function (ingredient) {
+    var trimmed_ingredient = ingredient.trim();
+    var results = false;
+
+    var lowestKey = trimmed_ingredient.length;
+    for (var _i = 0, regexStrings_1 = regexStrings; _i < regexStrings_1.length; _i++) {
+        var regType = regexStrings_1[_i];
+        var regex = new RegExp("(" + regType.string + ")", 'g');
+        var regexResults = regex.exec(trimmed_ingredient);
+        if (regexResults !== null && regexResults.index<lowestKey ) {
+            lowestKey = regexResults.index;
+            results = { regexResults: regexResults, type: regType.name };
+        }
+    }
+    return results;
+};
+
+/**
+ * Find the number in the ingredient line.
+ *
+ * @param ingredient Ingredient line. E.g. "2 cups of almonds"
+ * @returns [startIndex, endIndex] or false if no number is found.
+ */
+var findNumberOrFraction = function (ingredient) {
+    var numberAndType = getNumberWithType(ingredient);
+    if (!numberAndType) {
+        return false;
+    }
+
+    var regexResults = numberAndType.regexResults;
+
+    //check if the number is coming from a html element
+    var number = numberAndType.regexResults[0];
+    var regexHTML = new RegExp("\<.*?" + number + ".*?\>", 'g');
+    var rexexCheckHtml = regexHTML.exec(regexResults.input);
+
+    if (rexexCheckHtml !== null ) return false;
+
+    return { range: [regexResults.index, regexResults.index + regexResults[1].length], type: numberAndType.type };
+};
+/**
+ * Wrap complex number with `span` that applies CSS animation
+ * @param input [range, toRange] Range numbers (e.g. 2-4 will be [2,4])
+ */
+var wrapComplexUpdated = function (input, originalValue) {
+    return "<span class=\"zrdn-updated-amount\" data-original-value=\"" + originalValue + "\">" + input[0] + "-" + input[1] + "</span>";
+};
+/**
+ * Wrap number with `span` that applies CSS animation
+ * @param input Number to wrap.
+ */
+var wrapUpdated = function (input, originalValue) {
+    return "<span class=\"zrdn-updated-amount\" data-original-value=\"" + originalValue + "\">" + input + "</span>";
+};
+
+var roundNumber = function (amount) {
+    return Math.round(amount * 100) / 100;
+}
+
+
+/**
+ * Parse complex number and return int array.
+ * @param input Complex number
+ * @param factor
+ */
+var parseComplexAndUpdate = function (input, factor) {
+    var results = [-1, -1];
+    var parsedNumber = getNumberWithType(input.value);
+    if (!parsedNumber) {
+        return results;
+    }
+    // split on '-'
+    var str = parsedNumber.regexResults[1];
+    var split = str.split('-');
+    // a*factor - b*factor
+    var prelim_left = parseFloat(split[0]) * factor;
+    var left = roundNumber(prelim_left)
+    var prelim_right = parseFloat(split[1]) * factor;
+    var right = roundNumber(prelim_right);
+
+    return [left, right];
+};
+/**
+ * Parse and return number once it's processed.
+ * @param input Number
+ * @param factor
+ */
+var parseAndUpdate = function (input, factor) {
+    var results = -1;
+    var parsedNumber = getNumberWithType(input.value);
+    if (!parsedNumber) {
+        return results;
+    }
+    if (parsedNumber.type === 'int') {
+        var prelim_results = parseInt(parsedNumber.regexResults[1]) * factor;
+        results = roundNumber(prelim_results);
+    }
+    else if (parsedNumber.type === 'decimal') {
+        var prelim_results = parseFloat(parsedNumber.regexResults[1]) * factor;
+        results = roundNumber(prelim_results);
+    }
+    else if (parsedNumber.type === 'fractionSymbol') {
+        var symbolToCombined = {
+            '¼': '1/4',
+            '½': '1/2',
+            '¾': '3/4',
+            '⅓': '1/3',
+            '⅔': '2/3',
+            '⅕': '1/5',
+            '⅖': '2/5',
+            '⅗': '3/5',
+            '⅘': '4/5',
+            '⅙': '1/6',
+            '⅚': '5/6',
+            '⅛': '1/8',
+            '⅜': '3/8',
+            '⅝': '5/8',
+            '⅞': '7/8'
+        };
+        var str = parsedNumber.regexResults[1];
+        var prelim_results = parseAndUpdate({ value: symbolToCombined[str], type: 'fractionCombined' }, factor);
+        results = roundNumber(prelim_results);
+    }
+    else if (parsedNumber.type === 'fractionCombined') {
+        // split on '/'
+        var str = parsedNumber.regexResults[1];
+        var split = str.split('/');
+        // divide a/b * factor
+         var prelim_results = parseInt(split[0], 10) / parseInt(split[1], 10) * factor;
+        results = roundNumber(prelim_results);
+    }
+    else if ( parsedNumber.type === 'mixedNumber' ) {
+        var str = parsedNumber.regexResults[1];
+        //get integer and fraction from this type, which consists of both integers and fractions
+        var fractionNumber = str.replace(/\d*/, '');
+        var regex = new RegExp(/\d*/, 'g');
+        var integerNumber = regex.exec(str);
+        integerNumber = integerNumber[0];
+        integerNumber = parseAndUpdate({ value: integerNumber, type: 'int' }, 1); // we use factor of 1 in this prelim stage
+        fractionNumber = parseAndUpdate({ value: fractionNumber, type: 'fractionCombined' }, 1);
+        // // sum them then * factor
+        var prelim_results = (integerNumber + fractionNumber) * factor;
+        results = roundNumber(prelim_results);
+    }
+    return results;
+};
+
+/**
+ * Get ingredient list array from recipe.
+ * @param $target Yield input jQuery element
+ */
+var getIngredientList = function ($target) {
+
+    var listSelectors = [
+        function () { return $target.closest('#zrdn-recipe-container').find('.zrdn-ingredients-list li'); },
+    ];
+    for (var _i = 0, listSelectors_1 = listSelectors; _i < listSelectors_1.length; _i++) {
+        var $sel = listSelectors_1[_i];
+        var $results = $sel();
+        if ($results.length > 0) {
+
+            return $results.toArray();
+        }
+    }
+    var empty = [];
+    return empty;
+};
+/**
+ * Handler for yield input field change
+ * @param event jQuery change event
+ */
+ 
+var onYieldChange = function (event) {
+    var $target = jQuery(event.target);
+    var newValue = $target.val();
+    
+
+    // oldvalue is the previous value
+    var oldValue = $target.attr('data-old-value');
+
+    $target.attr('data-old-value', newValue);
+
+    // don't proceed if it's not an int
+    if (isNaN(parseInt(newValue))) {
+        return false;
+    }
+
+    // hack: for some reason value prop isn't updated when up is clicked on the control
+    // we need to update this for printed recipes to show proper serving number
+    $target.attr('value', newValue);
+
+    var changeFactor = getChangeFactor(newValue, oldValue);
+    var ingredients = getIngredientList($target);
+
+    
+    for (var _i = 0, ingredients_1 = ingredients; _i < ingredients_1.length; _i++) {
+        var ing = ingredients_1[_i];
+        var $ing = jQuery(ing);
+        
+        // strip <span> we add
+        var $metaWrapper = $ing.find('span.zrdn-updated-amount');
+        $metaWrapper.contents().unwrap();
+
+        var ingText = $ing.html().trim();
+        var indexAndType = findNumberOrFraction(ingText);
+
+        if (!indexAndType) continue;
+        var currentUnitValue = ingText.substring(indexAndType.range[0], indexAndType.range[1]);
+        if (indexAndType) {
+
+            var newRight = ingText.substring(indexAndType.range[1]);
+            var newLeft = ingText.substring(0, indexAndType.range[0]);
+            var originalValue = null;
+
+            var decimalRounding = getDecimalRounding(newRight);
+
+            if ($metaWrapper.length > 0) {
+                originalValue = unescape( $metaWrapper.data('original-value').toString() );
+            }
+
+            if (!originalValue) {
+                originalValue = ingText;
+            }
+
+            var middle = '';
+            if (indexAndType.type === "int" || indexAndType.type === "decimal" || indexAndType.type === "fractionCombined" || indexAndType.type === "fractionSymbol" || indexAndType.type === "mixedNumber") {
+                var input = parseAndUpdate({ value: currentUnitValue, type: indexAndType.type }, changeFactor);
+                middle = wrapUpdated(input, escape(originalValue) );
+            }
+            else {
+                var input = parseComplexAndUpdate({ value: currentUnitValue, type: indexAndType.type }, changeFactor);
+                middle = wrapComplexUpdated(input, escape(originalValue) );
+            }
+
+
+
+            $ing.html(newLeft + " " + middle + " " + newRight);
+        }
+    }
+    return true;
+};
+
+function getDecimalRounding (ingText) {
+
+    for (var i = 0; i < zrdn_units.length; i++) {
+        
+        if (ingText.search(zrdn_units[i].src[0]) || ingText.search(zrdn_units[i].src[1])) {
+            
+        }
+
+    }
+
+}
+
+/**
+ * Change yield string to include input element.
+ * @param yieldString Yield string in the recipe
+ */
+var replaceYieldNumberWithInput = function (yieldString) {
+    var regex = /([a-zA-Z ]*)(\d+)([a-zA-Z ]*)/;
+    if (regex.test(yieldString)) {
+        return yieldString.replace(regex, '$1<label for="zrdn-serving-adjustment-input"></label><input type="number" class="zrdn-serving-adjustment-input" data-old-value="$2" value="$2" min="1" /><div>$3</div>');
+    }
+    return false;
+};
+/**
+ * Entry point run when DOM is ready.
+ */
+jQuery(document).ready(function () {
+    // find yield field
+    var $yield = jQuery('.zrdn-yield');
+    var oldYield = $yield.html();
+
+    if ($yield.length > 1) return;
+    
+    var replaced = replaceYieldNumberWithInput(oldYield);
+
+    $yield.ready(() => {
+        var oldValue = jQuery('.zrdn-serving-adjustment-input').data('old-value');
+        jQuery('.zrdn-serving-adjustment-input').attr('data-initial-value', oldValue); 
+    })
+
+    if (replaced) {
+        $yield.html(replaced).on('change', onYieldChange);
+    }
+});
